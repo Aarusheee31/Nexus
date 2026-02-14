@@ -1,51 +1,238 @@
 """
 FlavorBridge - Translate comfort dishes across cuisines.
-NO HARDCODED DATA: All data from src.data.mock_data.
+Uses real Foodoscope API for recipe data.
 """
 
 from __future__ import annotations
 import math
+import requests
 from typing import Any
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from src.data import mock_data
 
-# --- Data from mock_data (single source of truth) ---
-MOCK_RECIPES = mock_data.MOCK_RECIPES
-INSTRUCTIONS = mock_data.INSTRUCTIONS
+# --- API Configuration ---
+API_BASE_URL = "https://api.foodoscope.com/recipe2-api"
+API_TOKEN = os.getenv("API_KEY")
+if not API_TOKEN:
+    raise ValueError("API_KEY not found in environment variables")
+
+API_HEADERS = {
+    "Authorization": f"Bearer {API_TOKEN}",
+    "Accept": "application/json"
+}
+
+# --- Static data from mock_data (for scoring logic only) ---
 METHOD_KEYWORDS = mock_data.METHOD_KEYWORDS
 PROTEIN_MAP = mock_data.PROTEIN_MAP
 ALLERGEN_KEYWORDS_BACKEND = mock_data.ALLERGEN_KEYWORDS_BACKEND
 MOCK_FOOD_PAIR = mock_data.MOCK_FOOD_PAIR
-RECIPE_FLAVOR_PROFILES = mock_data.RECIPE_FLAVOR_PROFILES
-
-# Map recipe title -> id for INSTRUCTIONS lookup (first MOCK_RECIPES had ids)
-TITLE_TO_ID = {
-    "Chinese-Style Broccoli Salad": "C001",
-    "Chinese Green Bean Stir-Fry": "C002",
-    "Spicy Cabbage Kimchi": "K001",
-    "Gochujang Sauce": "K002",
-    "Judy's Hearty Vegetable Minestrone Soup": "I001",
-    "Italian Zucchini Saute": "I002",
-}
 
 
-def _flatten_recipes() -> list[dict]:
-    """Flatten MOCK_RECIPES (nested by category) into a list."""
-    out = []
-    for recipes in MOCK_RECIPES.values():
-        for r in recipes:
-            out.append(dict(r))
-    return out
+# === API FUNCTIONS ===
+
+def fetch_recipe_by_title(title: str) -> dict | None:
+    """Fetch recipe from API by title."""
+    try:
+        url = f"{API_BASE_URL}/recipe-bytitle/recipeByTitle"
+        params = {"title": title}
+        print(f"\n🔍 API CALL: Recipe by Title")
+        print(f"   URL: {url}")
+        print(f"   Params: {params}")
+        
+        response = requests.get(url, params=params, headers=API_HEADERS, timeout=10)
+        
+        print(f"   Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"   Response: {data.get('message', 'No message')}")
+            
+            if data.get("success") and data.get("data"):
+                recipes = data["data"]
+                print(f"   ✅ Found {len(recipes)} recipe(s)")
+                if recipes and len(recipes) > 0:
+                    print(f"   📋 First match: {recipes[0].get('Recipe_title', 'Unknown')}")
+                    return recipes[0]
+            else:
+                print(f"   ❌ No recipes found in response")
+        else:
+            print(f"   ❌ Failed with status {response.status_code}")
+            print(f"   Response: {response.text[:200]}")
+        
+        return None
+    except Exception as e:
+        print(f"❌ ERROR fetching recipe by title: {e}")
+        return None
 
 
-def _get_instructions(recipe: dict) -> list[str]:
-    """Get cooking steps from INSTRUCTIONS or processes."""
-    title = recipe.get("title", "")
-    rid = recipe.get("id") or TITLE_TO_ID.get(title)
-    if rid and rid in INSTRUCTIONS:
-        return INSTRUCTIONS[rid].get("steps", [])
-    procs = recipe.get("processes", [])
-    return [str(p) for p in procs] if procs else ["cook"]
+def fetch_recipe_instructions(recipe_id: str) -> list[str]:
+    """Fetch recipe instructions from API by recipe_id."""
+    try:
+        url = f"{API_BASE_URL}/instructions/{recipe_id}"
+        print(f"\n📖 API CALL: Recipe Instructions")
+        print(f"   URL: {url}")
+        print(f"   Recipe ID: {recipe_id}")
+        
+        response = requests.get(url, headers=API_HEADERS, timeout=10)
+        
+        print(f"   Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            if "steps" in data:
+                steps = data["steps"]
+                print(f"   ✅ Found {len(steps)} cooking steps")
+                if steps:
+                    print(f"   First step: {steps[0][:80]}...")
+                return steps
+            else:
+                print(f"   ❌ No 'steps' field in response")
+                print(f"   Response keys: {list(data.keys())}")
+        else:
+            print(f"   ❌ Failed with status {response.status_code}")
+            print(f"   Response: {response.text[:200]}")
+        
+        return []
+    except Exception as e:
+        print(f"❌ ERROR fetching instructions: {e}")
+        return []
+
+
+def _normalize_region_name(region: str) -> str:
+    """Normalize region name for API compatibility.
+    
+    The API expects single region names like 'Chinese', 'Italian', etc.
+    If user provides compound names like 'Chinese and Mongolian', extract first region.
+    """
+    region = region.strip()
+    
+    # Handle compound regions (e.g., "Chinese and Mongolian" -> "Chinese")
+    if " and " in region.lower():
+        parts = region.split(" and ")
+        normalized = parts[0].strip()
+        print(f"\n⚠️  Compound region detected: '{region}'")
+        print(f"   Using first region: '{normalized}'")
+        return normalized
+    
+    # Handle other separators
+    if "/" in region:
+        parts = region.split("/")
+        normalized = parts[0].strip()
+        print(f"\n⚠️  Compound region detected: '{region}'")
+        print(f"   Using first region: '{normalized}'")
+        return normalized
+    
+    return region
+
+
+def fetch_recipes_by_region(region: str, diet: str = "", limit: int = 50) -> list[dict]:
+    """Fetch recipes from API by region and optional diet."""
+    try:
+        # Normalize region name
+        normalized_region = _normalize_region_name(region)
+        
+        url = f"{API_BASE_URL}/recipe/region-diet/region-diet"
+        params = {
+            "region": normalized_region,
+            "diet": 'vegan',
+            "limit": limit,
+        }
+        if diet:
+            params["diet"] = diet
+        
+        print(f"\n🌍 API CALL: Recipes by Region")
+        print(f"   URL: {url}")
+        print(f"   Params: {params}")
+        
+        response = requests.get(url, params=params, headers=API_HEADERS, timeout=10)
+        
+        print(f"   Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            print(f"   Response: {data.get('message', 'No message')}")
+            
+            if data.get("success") and data.get("data"):
+                recipes = data["data"]
+                print(f"   ✅ Found {len(recipes)} recipes")
+                
+                # Show first few recipe titles
+                if recipes:
+                    print(f"   Sample recipes:")
+                    for i, r in enumerate(recipes[:5], 1):
+                        print(f"      {i}. {r.get('Recipe_title', 'Unknown')}")
+                
+                return recipes
+            else:
+                print(f"   ❌ No recipes found in response")
+        else:
+            print(f"   ❌ Failed with status {response.status_code}")
+            print(f"   Response: {response.text[:200]}")
+            
+            # Try alternative region names if first attempt failed
+            if response.status_code == 400:
+                print(f"\n   💡 Trying alternative region spellings...")
+                alternatives = _get_alternative_region_names(region)
+                for alt_region in alternatives:
+                    print(f"   Trying: '{alt_region}'")
+                    params["region"] = alt_region
+                    response = requests.get(url, params=params, headers=API_HEADERS, timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get("success") and data.get("data"):
+                            print(f"   ✅ Success with alternative name: '{alt_region}'")
+                            return data["data"]
+        
+        return []
+    except Exception as e:
+        print(f"❌ ERROR fetching recipes by region: {e}")
+        return []
+
+
+def _get_alternative_region_names(region: str) -> list[str]:
+    """Get alternative spellings/names for a region.
+    
+    Some regions might be named differently in the API.
+    """
+    region_lower = region.lower()
+    alternatives = []
+    
+    # Common alternatives
+    mappings = {
+        "chinese and mongolian": ["Chinese", "Mongolian", "Asian"],
+        "chinese": ["Chinese", "Asian"],
+        "italian": ["Italian", "European"],
+        "mexican": ["Mexican", "Latin American"],
+        "indian": ["Indian", "Asian"],
+        "japanese": ["Japanese", "Asian"],
+        "thai": ["Thai", "Asian"],
+        "french": ["French", "European"],
+        "greek": ["Greek", "European"],
+        "middle eastern": ["Middle Eastern", "Asian"],
+        "spanish": ["Spanish", "European"],
+        "korean": ["Korean", "Asian"],
+        "vietnamese": ["Vietnamese", "Asian"],
+    }
+    
+    for key, values in mappings.items():
+        if key in region_lower:
+            alternatives.extend([v for v in values if v.lower() != region_lower])
+            break
+    
+    return alternatives[:3]  # Return max 3 alternatives
+
+
+# === HELPER FUNCTIONS ===
+
+def _parse_processes(processes_str: str) -> list[str]:
+    """Parse the Processes field (e.g. 'heat||cook||stir') into a list."""
+    if not processes_str:
+        return []
+    return [p.strip() for p in str(processes_str).split("||") if p.strip()]
 
 
 def _get_ingredients_from_title(title: str) -> list[str]:
@@ -86,10 +273,9 @@ def detect_protein(recipe_title: str) -> str:
     return ""
 
 
-def _infer_flavor_style(recipe: dict) -> dict[str, float]:
+def _infer_flavor_style(recipe_title: str, method: str) -> dict[str, float]:
     """Infer flavor style from dish name and cooking method."""
-    title = (recipe.get("title") or "").lower()
-    method = recipe.get("_method", "slow_saucy")
+    title = recipe_title.lower()
     vector = {}
     if "curry" in title or "soup" in title:
         vector["savory"] = 0.4
@@ -106,23 +292,6 @@ def _infer_flavor_style(recipe: dict) -> dict[str, float]:
         vector["savory"] = 0.5
     total = sum(vector.values())
     return {k: v / total for k, v in vector.items()} if total else {"savory": 0.5}
-
-
-def build_flavor_vector(flavor_profile_response: dict) -> dict[str, float]:
-    """Build normalized flavor vector from flavor profile response."""
-    vector = {}
-    for item in flavor_profile_response.get("content", []):
-        if "flavor_profile" in item:
-            fp = str(item["flavor_profile"]).strip()
-            if fp:
-                vector[fp] = vector.get(fp, 0.0) + 1.0
-        if "functional_groups" in item:
-            for fg in str(item["functional_groups"]).split("@"):
-                fg = fg.strip().lower()
-                if fg:
-                    vector[fg] = vector.get(fg, 0.0) + 1.0
-    total = sum(vector.values())
-    return {k: v / total for k, v in vector.items()} if total else vector
 
 
 def flavor_similarity(source_vector: dict, target_vector: dict) -> float:
@@ -194,41 +363,6 @@ def score_recipe(source: dict, target: dict) -> tuple[float, list[str]]:
     return (score, reasons)
 
 
-def _find_source_recipe(source_recipe_title: str) -> dict | None:
-    """Find source recipe in MOCK_RECIPES by title (exact or partial)."""
-    all_recipes = _flatten_recipes()
-    title_lower = source_recipe_title.lower().strip()
-    for r in all_recipes:
-        if (r.get("title") or "").lower() == title_lower:
-            return r
-    for r in all_recipes:
-        if title_lower in (r.get("title") or "").lower():
-            return r
-    return None
-
-
-def _get_target_recipes(target_cuisine: str, excluded_allergens: list[str]) -> list[dict]:
-    """Get recipes from target cuisine, filtered by allergens."""
-    all_recipes = _flatten_recipes()
-    target_lower = target_cuisine.lower().strip()
-    out = []
-    for r in all_recipes:
-        region = (r.get("region") or "").lower()
-        if region != target_lower:
-            continue
-        ingredients = _get_ingredients_from_title(r.get("title", ""))
-        if contains_allergen(ingredients, excluded_allergens):
-            continue
-        out.append(r)
-    return out
-
-
-def _get_top_in_region(target_cuisine: str, excluded_allergens: list[str], limit: int = 3) -> list[dict]:
-    """Get top N recipes in region when no good matches (by simple order)."""
-    candidates = _get_target_recipes(target_cuisine, excluded_allergens)
-    return candidates[:limit]
-
-
 def recommend_recipes(
     source_recipe_title: str,
     target_cuisine: str,
@@ -236,24 +370,48 @@ def recommend_recipes(
 ) -> dict:
     """
     Recommend target-cuisine recipes similar to source dish.
-    Returns: { matches: [...], no_matches: bool, top_in_region: [...] }
+    ALWAYS returns at least some recommendations from the target region.
     """
     excluded_allergens = excluded_allergens or []
-    all_recipes = _flatten_recipes()
 
-    source_recipe = _find_source_recipe(source_recipe_title)
-    if not source_recipe:
-        source_recipe = {
-            "title": source_recipe_title,
-            "region": "Unknown",
-            "processes": ["simmer", "cook"],
-        }
+    print(f"\n{'='*60}")
+    print(f"🎯 RECOMMENDATION REQUEST")
+    print(f"{'='*60}")
+    print(f"Source Dish: {source_recipe_title}")
+    print(f"Target Cuisine: {target_cuisine}")
+    print(f"Excluded Allergens: {excluded_allergens}")
+    print(f"{'='*60}")
 
-    src_inst = _get_instructions(source_recipe)
-    src_method = detect_cooking_method(src_inst)
-    src_protein = detect_protein(source_recipe.get("title", ""))
-    src_flavor = _infer_flavor_style({"title": source_recipe.get("title", ""), "_method": src_method})
-    src_ingredients = _get_ingredients_from_title(source_recipe.get("title", ""))
+    # Step 1: Fetch source recipe from API
+    source_recipe_data = fetch_recipe_by_title(source_recipe_title)
+    
+    if not source_recipe_data:
+        # Fallback if recipe not found
+        print(f"\n⚠️  Source recipe not found in API, using fallback analysis")
+        src_inst = ["simmer", "cook"]
+        src_method = detect_cooking_method(src_inst)
+        src_protein = detect_protein(source_recipe_title)
+        src_flavor = _infer_flavor_style(source_recipe_title, src_method)
+        src_ingredients = _get_ingredients_from_title(source_recipe_title)
+    else:
+        # Get instructions for source recipe
+        recipe_id = source_recipe_data.get("Recipe_id", "")
+        src_inst = fetch_recipe_instructions(recipe_id) if recipe_id else []
+        
+        # If no instructions from API, try parsing Processes field
+        if not src_inst and "Processes" in source_recipe_data:
+            src_inst = _parse_processes(source_recipe_data.get("Processes", ""))
+            print(f"\n📝 Using Processes field: {len(src_inst)} steps")
+        
+        if not src_inst:
+            src_inst = ["cook"]
+            print(f"\n⚠️  No instructions available, using default")
+        
+        src_method = detect_cooking_method(src_inst)
+        src_title = source_recipe_data.get("Recipe_title", source_recipe_title)
+        src_protein = detect_protein(src_title)
+        src_flavor = _infer_flavor_style(src_title, src_method)
+        src_ingredients = _get_ingredients_from_title(src_title)
 
     source_profile = {
         "method": src_method,
@@ -262,16 +420,67 @@ def recommend_recipes(
         "ingredients": src_ingredients,
     }
 
-    candidates = _get_target_recipes(target_cuisine, excluded_allergens)
+    print(f"\n{'─'*60}")
+    print(f"📊 SOURCE PROFILE ANALYSIS")
+    print(f"{'─'*60}")
+    print(f"Cooking Method: {src_method}")
+    print(f"Protein Type: {src_protein or 'None detected'}")
+    print(f"Flavor Vector: {src_flavor}")
+    print(f"Ingredients: {src_ingredients}")
 
+    # Step 2: Fetch target cuisine recipes from API
+    target_recipes = fetch_recipes_by_region(target_cuisine, limit=10)
+    
+    if not target_recipes:
+        print(f"\n❌ No recipes found for {target_cuisine}")
+        print(f"\n💡 Tips:")
+        print(f"   • Try simpler region names: 'Chinese' instead of 'Chinese and Mongolian'")
+        print(f"   • Check spelling and capitalization")
+        print(f"   • Try these common regions: Italian, Chinese, Mexican, Indian, French, Greek")
+        
+        return [{
+            "recipe_title": f"No recipes found for '{target_cuisine}'",
+            "final_score": 0.0,
+            "explanation": [
+                f"The API couldn't find recipes for '{target_cuisine}'.",
+                "Try using a simpler region name like 'Chinese', 'Italian', 'Mexican', etc.",
+                "Make sure the region name is capitalized correctly."
+            ],
+            "no_match_fallback": True,
+        }]
+
+    print(f"\n{'─'*60}")
+    print(f"🔍 SCORING {len(target_recipes)} RECIPES")
+    print(f"{'─'*60}")
+
+    # Step 3: Filter by allergens and score each recipe
     scored = []
-    for c in candidates:
-        title = c.get("title", "")
-        inst = _get_instructions(c)
-        tgt_method = detect_cooking_method(inst)
-        tgt_protein = detect_protein(title)
-        tgt_flavor = _infer_flavor_style({"title": title, "_method": tgt_method})
+    filtered_count = 0
+    
+    for idx, recipe in enumerate(target_recipes):
+        title = recipe.get("Recipe_title", "")
         tgt_ingredients = _get_ingredients_from_title(title)
+        
+        # Skip if contains allergens
+        if contains_allergen(tgt_ingredients, excluded_allergens):
+            filtered_count += 1
+            continue
+        
+        # Get instructions
+        recipe_id = recipe.get("Recipe_id", "")
+        tgt_inst = []
+        
+        # Try to get instructions from API (but don't fetch for every recipe - too slow)
+        # Instead, use Processes field if available
+        if "Processes" in recipe:
+            tgt_inst = _parse_processes(recipe.get("Processes", ""))
+        
+        if not tgt_inst:
+            tgt_inst = ["cook"]
+        
+        tgt_method = detect_cooking_method(tgt_inst)
+        tgt_protein = detect_protein(title)
+        tgt_flavor = _infer_flavor_style(title, tgt_method)
 
         target_profile = {
             "method": tgt_method,
@@ -281,26 +490,73 @@ def recommend_recipes(
         }
 
         score, reasons = score_recipe(source_profile, target_profile)
-        scored.append((score, {"Recipe_title": title, "recipe": c}, reasons))
+        scored.append((score, {"Recipe_title": title, "recipe": recipe}, reasons))
 
+    if filtered_count > 0:
+        print(f"🚫 Filtered out {filtered_count} recipes due to allergens")
+    
+    print(f"✅ Scored {len(scored)} recipes")
+
+    # Sort by score
     scored.sort(key=lambda x: -x[0])
-    matches = [
-        {"recipe_title": s[1]["Recipe_title"], "final_score": round(s[0], 3), "explanation": s[2]}
-        for s in scored[:3]
-    ]
-
-    no_matches = len(matches) == 0 or (matches and matches[0]["final_score"] < 0.2)
-    if no_matches:
-        top_recipes = _get_top_in_region(target_cuisine, excluded_allergens, 3)
+    
+    print(f"\n{'─'*60}")
+    print(f"🏆 TOP SCORING RECIPES")
+    print(f"{'─'*60}")
+    
+    # Show top 10 scores for debugging
+    for i, (score, data, reasons) in enumerate(scored[:10], 1):
+        print(f"{i}. {data['Recipe_title']}")
+        print(f"   Score: {score:.3f}")
+        print(f"   {reasons[0] if reasons else 'No explanation'}")
+    
+    # ALWAYS return at least 3 recipes
+    top_count = min(3, len(scored))
+    
+    if len(scored) == 0:
+        # No recipes passed allergen filter - return top 3 from original list
+        print(f"\n⚠️  No recipes passed filters, showing top 3 from region anyway")
         return [
             {
-                "recipe_title": r.get("title", "Unknown"),
+                "recipe_title": r.get("Recipe_title", "Unknown"),
                 "final_score": 0.0,
-                "explanation": ["No close match found. Top pick in this region."],
+                "explanation": ["No match found after allergen filtering. This is a popular dish in the region."],
                 "no_match_fallback": True,
+                "recipe_id": r.get("Recipe_id", ""),
+                "calories": r.get("Calories", ""),
+                "cook_time": r.get("cook_time", ""),
+                "prep_time": r.get("prep_time", ""),
+                "servings": r.get("servings", ""),
             }
-            for r in top_recipes
+            for r in target_recipes[:3]
         ]
+    
+    # Build results
+    matches = [
+        {
+            "recipe_title": s[1]["Recipe_title"],
+            "final_score": round(s[0], 3),
+            "explanation": s[2],
+            "recipe_id": s[1]["recipe"].get("Recipe_id", ""),
+            "calories": s[1]["recipe"].get("Calories", ""),
+            "cook_time": s[1]["recipe"].get("cook_time", ""),
+            "prep_time": s[1]["recipe"].get("prep_time", ""),
+            "servings": s[1]["recipe"].get("servings", ""),
+        }
+        for s in scored[:top_count]
+    ]
+
+    # Check if scores are very low (less than 0.2)
+    if matches and matches[0]["final_score"] < 0.2:
+        print(f"\n⚠️  Low match scores detected (best: {matches[0]['final_score']:.3f})")
+        print(f"   Still showing top {len(matches)} recipes from the region")
+        for m in matches:
+            m["explanation"].insert(0, "⚠️ Low similarity - but this is a popular dish in the region")
+    
+    print(f"\n{'='*60}")
+    print(f"✅ RETURNING {len(matches)} RECOMMENDATIONS")
+    print(f"{'='*60}\n")
+
     return matches
 
 
