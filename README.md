@@ -1,11 +1,11 @@
-# 🍽️ FlavorBridge - Taste Translator
+# 🍽️ PalatePal - Taste Translator
 
-A modern food-tech web application built with React that helps you translate your comfort food flavors into dishes from new cuisines. Perfect for hackathon demos and presentations!
+A modern food-tech web application built with React that helps you translate your comfort food flavours into dishes from new cuisines.
 
 ## 📁 Project Structure
 
 ```
-flavor-bridge-app/
+palate_pal/
 ├── public/
 │   └── index.html              # HTML template
 ├── src/
@@ -23,7 +23,7 @@ flavor-bridge-app/
 │   │   ├── Settings.js         # App settings
 │   │   └── Pages.css           # All page styles
 │   ├── data/
-│   │   └── mockData.js         # Mock data and constants
+│   │   └── mock_data.py         # Mock data and constants
 │   ├── App.js                  # Main app component
 │   ├── App.css                 # App layout styles
 │   ├── index.js                # React entry point
@@ -36,7 +36,7 @@ flavor-bridge-app/
 ## 🚀 Features
 
 ### Core Features
-- **Flavor Translator** - Input comfort dish, discover similar dishes in new cuisines
+- **Flavour Translator** - Input comfort dish, discover similar dishes in new cuisines
 - **Recipe Finder** - Browse and view detailed recipes
 - **Restaurant Finder** - Find nearby restaurants with match scores
 - **Allergen Guide** - Get safe substitutes for allergens
@@ -45,7 +45,7 @@ flavor-bridge-app/
 
 ### UI/UX Features
 - Mobile-first responsive design
-- Interactive collapsible sidebar (works like ChatGPT/Claude)
+- Interactive collapsible sidebar 
 - Smooth animations and transitions
 - Beautiful gradient backgrounds
 - Progress bar animations
@@ -133,10 +133,6 @@ flavor-bridge-app/
 2. Import in `App.js`
 3. Add route handler
 4. Update sidebar in `Sidebar.js`
-
-### Modifying Data
-- Edit `src/data/mockData.js` for mock data
-- Add new constants or data structures as needed
 
 ### Styling
 - Global styles: `src/index.css`
