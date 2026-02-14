@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, UtensilsCrossed } from 'lucide-react';
 import Sidebar from './components/Sidebar';
+import Onboarding, { getOnboardingComplete, getUserName } from './pages/Onboarding';
 import Home from './pages/Home';
 import Results from './pages/Results';
 import Recipes from './pages/Recipes';
@@ -26,6 +27,7 @@ function transformResults(raw, recipes) {
 }
 
 function App() {
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => getOnboardingComplete());
   const [currentScreen, setCurrentScreen] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
@@ -144,6 +146,14 @@ function App() {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
+  if (!hasCompletedOnboarding) {
+    return (
+      <div className="app-container" style={{ maxWidth: '100%', margin: 0, minHeight: '100vh', padding: 0 }}>
+        <Onboarding onComplete={() => setHasCompletedOnboarding(true)} />
+      </div>
+    );
+  }
+
   if (dataLoading) return <div className="app-container" style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
   if (dataError) return <div className="app-container" style={{ padding: 40, textAlign: 'center', color: '#e74c3c' }}>{dataError}</div>;
 
@@ -177,6 +187,7 @@ function App() {
           <div className="content-wrapper">
             {currentScreen === 'home' && (
               <Home 
+                userName={getUserName()}
                 comfortCuisines={comfortCuisines}
                 targetCuisines={targetCuisines}
                 comfortCuisine={comfortCuisine}
