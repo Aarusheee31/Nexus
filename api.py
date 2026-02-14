@@ -4,9 +4,16 @@ Uses real Foodoscope API for recipe data.
 Run: python api.py
 """
 
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flavor_bridge import recommend_recipes, fetch_recipe_by_title, fetch_recipe_instructions, fetch_recipes_by_region
+from flavor_bridge import (
+    recommend_recipes, 
+    fetch_recipe_by_title, 
+    fetch_recipe_instructions, 
+    fetch_recipes_by_region,
+    API_BASE_URL
+)
 from src.data.mock_data import (
     COMFORT_CUISINES,
     TARGET_CUISINES,
@@ -16,6 +23,14 @@ from src.data.mock_data import (
     INITIAL_SETTINGS,
     MOCK_RESTAURANTS,
 )
+import requests
+
+# Get API token from environment variable
+API_TOKEN = os.getenv('FOODOSCOPE_API_TOKEN', 'Y2OYhJpk2OjKmCic-fmVCm_BPXuhBc2N75hZukqjQstOyFPF')
+API_HEADERS = {
+    "Authorization": f"Bearer {API_TOKEN}",
+    "Accept": "application/json"
+}
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
@@ -33,6 +48,92 @@ def get_data():
         "initialSettings": INITIAL_SETTINGS,
         "restaurants": MOCK_RESTAURANTS,
     })
+
+
+@app.route("/api/recipe/search", methods=["POST"])
+def search_recipes():
+    """
+    Search for recipes by title/query.
+    Body: { "query": "chicken curry" }
+    """
+    data = request.get_json() or {}
+    query = data.get("query", "").strip()
+    
+    if not query:
+        return jsonify({"error": "Query parameter is required"}), 400
+    
+    if len(query) < 3:
+        return jsonify({"error": "Query must be at least 3 characters"}), 400
+    
+    print(f"\n🔍 RECIPE SEARCH REQUEST")
+    print(f"   Query: '{query}'")
+    
+    try:
+        # Call Foodoscope API to search recipes by title
+        url = f"{API_BASE_URL}/recipe-bytitle/recipeByTitle"
+        params = {"title": query}
+        
+        print(f"   API URL: {url}")
+        print(f"   Params: {params}")
+        
+        response = requests.get(url, params=params, headers=API_HEADERS, timeout=10)
+        
+        print(f"   Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            api_data = response.json()
+            
+            if api_data.get("success") and api_data.get("data"):
+                recipes = api_data["data"]
+                print(f"   ✅ Found {len(recipes)} recipes")
+                
+                # Return top 20 results
+                return jsonify({
+                    "success": True,
+                    "query": query,
+                    "count": len(recipes),
+                    "recipes": recipes[:20]
+                })
+            else:
+                print(f"   ❌ No recipes found")
+                return jsonify({
+                    "success": True,
+                    "query": query,
+                    "count": 0,
+                    "recipes": []
+                })
+        else:
+            print(f"   ❌ API Error: {response.status_code}")
+            return jsonify({"error": f"API returned status {response.status_code}"}), 500
+            
+    except Exception as e:
+        print(f"   ❌ ERROR: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/recipe/details/<recipe_id>", methods=["GET"])
+def get_recipe_details(recipe_id):
+    """
+    Get full recipe details including instructions.
+    """
+    print(f"\n📖 RECIPE DETAILS REQUEST")
+    print(f"   Recipe ID: {recipe_id}")
+    
+    try:
+        # Fetch instructions
+        instructions = fetch_recipe_instructions(recipe_id)
+        
+        print(f"   ✅ Found {len(instructions)} instruction steps")
+        
+        return jsonify({
+            "success": True,
+            "recipe_id": recipe_id,
+            "instructions": instructions
+        })
+        
+    except Exception as e:
+        print(f"   ❌ ERROR: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/recipe/<recipe_title>", methods=["GET"])
@@ -134,6 +235,7 @@ if __name__ == "__main__":
     print("╚═══════════════════════════════════════════════════════════════════════════════╝")
     print("")
     print("  ✅ Using REAL Foodoscope API for recipe data")
+    print(f"  🔑 API Token: {API_TOKEN[:20]}..." if API_TOKEN else "  ❌ No API token found!")
     print("  🌐 Server: http://localhost:5000")
     print("  📡 CORS enabled for: http://localhost:3000")
     print("")
@@ -141,6 +243,8 @@ if __name__ == "__main__":
     print("    • GET  /api/health")
     print("    • GET  /api/data")
     print("    • POST /api/recommend")
+    print("    • POST /api/recipe/search")
+    print("    • GET  /api/recipe/details/<recipe_id>")
     print("    • GET  /api/recipe/<title>")
     print("    • GET  /api/recipes/region/<region>")
     print("")
