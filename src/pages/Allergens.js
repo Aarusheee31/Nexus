@@ -1,9 +1,8 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { COMMON_ALLERGENS, ALLERGEN_SUBSTITUTES } from '../data/mockData';
 import './Pages.css';
 
-const Allergens = ({ selectedAllergens, toggleAllergen }) => {
+const Allergens = ({ commonAllergens = [], allergenSubstitutes = {}, selectedAllergens, toggleAllergen }) => {
   return (
     <div className="screen-content animate-fade-in">
       <div className="screen-header-center">
@@ -24,7 +23,7 @@ const Allergens = ({ selectedAllergens, toggleAllergen }) => {
       <div className="allergen-selector">
         <h3 className="section-title-small">Select Allergens</h3>
         <div className="allergen-pills">
-          {COMMON_ALLERGENS.map(allergen => (
+          {commonAllergens.map(allergen => (
             <button
               key={allergen}
               onClick={() => toggleAllergen(allergen)}
@@ -45,7 +44,7 @@ const Allergens = ({ selectedAllergens, toggleAllergen }) => {
                 <h4>Alternatives for {allergen}</h4>
               </div>
               <div className="substitute-body">
-                {ALLERGEN_SUBSTITUTES[allergen]?.map((substitute, index) => (
+                {allergenSubstitutes[allergen]?.map((substitute, index) => (
                   <div key={index} className="substitute-item">
                     <h5>{substitute.name}</h5>
                     <p>{substitute.description}</p>
