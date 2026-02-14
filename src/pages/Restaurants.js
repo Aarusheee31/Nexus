@@ -1,9 +1,8 @@
 import React from 'react';
 import { MapPin, Star } from 'lucide-react';
-import { MOCK_RESTAURANTS } from '../data/mockData';
 import './Pages.css';
 
-const Restaurants = () => {
+const Restaurants = ({ restaurants = [] }) => {
   return (
     <div className="screen-content animate-fade-in">
       <div className="screen-header-center">
@@ -20,7 +19,7 @@ const Restaurants = () => {
       </div>
 
       <div className="restaurants-grid">
-        {MOCK_RESTAURANTS.map((restaurant) => (
+        {restaurants.map((restaurant) => (
           <div key={restaurant.id} className="restaurant-card">
             <div className="restaurant-header">
               <div className="restaurant-info">

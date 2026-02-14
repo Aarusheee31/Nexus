@@ -55,7 +55,7 @@ flavor-bridge-app/
 
 1. **Extract/Clone the project**
    ```bash
-   cd flavor-bridge-app
+   cd palate_pal
    ```
 
 2. **Install dependencies**
@@ -63,17 +63,29 @@ flavor-bridge-app/
    npm install
    ```
 
-3. **Start development server**
+3. **Install Python dependencies (for FlavorBridge backend)**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Start the Python API** (terminal 1)
+   ```bash
+   python api.py
+   ```
+   API runs at [http://localhost:5000](http://localhost:5000)
+
+5. **Start React dev server** (terminal 2)
    ```bash
    npm start
    ```
 
-4. **Open browser**
+6. **Open browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 🛠️ Tech Stack
 
 - **React 18** - UI framework
+- **Python + Flask** - Backend API (`flavor_bridge.py`, `api.py`)
 - **Lucide React** - Beautiful icon library
 - **CSS3** - Custom styling with gradients & animations
 - **React Scripts** - Build tooling
@@ -108,10 +120,11 @@ flavor-bridge-app/
 
 ## 📝 Available Scripts
 
-- `npm start` - Run development server
-- `npm build` - Build for production
+- `npm start` - Run React development server
+- `npm run start:api` - Run Python Flask API (or `python api.py`)
+- `npm run build` - Build for production
 - `npm test` - Run tests
-- `npm eject` - Eject from Create React App
+- `npm run eject` - Eject from Create React App
 
 ## 🔧 Customization
 

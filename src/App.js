@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChefHat, Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
@@ -9,44 +9,105 @@ import Restaurants from './pages/Restaurants';
 import Allergens from './pages/Allergens';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import { MOCK_MATCH_RESULTS, MOCK_RECIPES, INITIAL_USER_PROFILE, INITIAL_SETTINGS } from './data/mockData';
 import './App.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+function transformResults(raw, recipes) {
+  return raw.map((r, i) => ({
+    id: i + 1,
+    name: r.recipe_title,
+    image: '🍽️',
+    matchScore: Math.round(r.final_score * 100),
+    explanation: Array.isArray(r.explanation) ? r.explanation.join(' • ') : r.explanation,
+    ingredients: recipes[r.recipe_title]?.ingredients ?? [],
+    hasRecipe: !!recipes[r.recipe_title],
+  }));
+}
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  // Home screen state
+  const [dataLoading, setDataLoading] = useState(true);
+  const [dataError, setDataError] = useState(null);
+
+  const [comfortCuisines, setComfortCuisines] = useState([]);
+  const [targetCuisines, setTargetCuisines] = useState([]);
+  const [recipes, setRecipes] = useState({});
+  const [restaurants, setRestaurants] = useState([]);
+  const [commonAllergens, setCommonAllergens] = useState([]);
+  const [allergenSubstitutes, setAllergenSubstitutes] = useState({});
+
   const [comfortCuisine, setComfortCuisine] = useState('');
   const [comfortDish, setComfortDish] = useState('');
   const [targetCuisine, setTargetCuisine] = useState('');
   const [allergenFilter, setAllergenFilter] = useState(false);
-  
-  // Results state
+
   const [matchResults, setMatchResults] = useState([]);
   const [animateProgress, setAnimateProgress] = useState(false);
-  
-  // Recipe state
-  const [selectedRecipe, setSelectedRecipe] = useState(null);
-  
-  // Allergens state
-  const [selectedAllergens, setSelectedAllergens] = useState([]);
-  
-  // Profile state
-  const [userProfile, setUserProfile] = useState(INITIAL_USER_PROFILE);
-  
-  // Settings state
-  const [settings, setSettings] = useState(INITIAL_SETTINGS);
+  const [translateLoading, setTranslateLoading] = useState(false);
+  const [translateError, setTranslateError] = useState(null);
 
-  const handleTranslate = () => {
-    setMatchResults(MOCK_MATCH_RESULTS);
-    setAnimateProgress(false);
-    setCurrentScreen('results');
-    setSidebarOpen(false);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [selectedAllergens, setSelectedAllergens] = useState([]);
+  const [userProfile, setUserProfile] = useState({ allergens: [], favoriteCuisines: [] });
+  const [settings, setSettings] = useState({});
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/data`)
+      .then((res) => res.json())
+      .then((data) => {
+        setComfortCuisines(data.comfortCuisines ?? []);
+        setTargetCuisines(data.targetCuisines ?? []);
+        setRecipes(data.recipes ?? {});
+        setRestaurants(data.restaurants ?? []);
+        setCommonAllergens(data.commonAllergens ?? []);
+        setAllergenSubstitutes(data.allergenSubstitutes ?? {});
+        setUserProfile(data.initialUserProfile ?? {});
+        setSettings(data.initialSettings ?? {});
+      })
+      .catch(() => setDataError("Start the Python API: run 'python api.py' in a terminal"))
+      .finally(() => setDataLoading(false));
+  }, []);
+
+  const handleTranslate = async () => {
+    setTranslateLoading(true);
+    setTranslateError(null);
+    const excluded = allergenFilter ? selectedAllergens : [];
+    try {
+      const res = await fetch(`${API_BASE}/api/recommend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          comfortDish: comfortDish,
+          targetCuisine: targetCuisine,
+          excludedAllergens: excluded,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `API error ${res.status}`);
+      }
+      const raw = await res.json();
+      const results = transformResults(raw, recipes);
+      setMatchResults(results);
+      setAnimateProgress(false);
+      setCurrentScreen('results');
+      setSidebarOpen(false);
+    } catch (err) {
+      const msg = err.message || 'Failed to fetch';
+      setTranslateError(
+        msg.toLowerCase().includes('fetch')
+          ? "Start the Python API: run 'python api.py' in a terminal"
+          : msg
+      );
+    } finally {
+      setTranslateLoading(false);
+    }
   };
 
   const handleViewRecipe = (recipeName) => {
-    setSelectedRecipe(MOCK_RECIPES[recipeName]);
+    setSelectedRecipe(recipes[recipeName]);
     setCurrentScreen('recipe-detail');
   };
 
@@ -83,6 +144,9 @@ function App() {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
+  if (dataLoading) return <div className="app-container" style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
+  if (dataError) return <div className="app-container" style={{ padding: 40, textAlign: 'center', color: '#e74c3c' }}>{dataError}</div>;
+
   return (
     <div className="app-container">
       <Sidebar 
@@ -113,6 +177,8 @@ function App() {
           <div className="content-wrapper">
             {currentScreen === 'home' && (
               <Home 
+                comfortCuisines={comfortCuisines}
+                targetCuisines={targetCuisines}
                 comfortCuisine={comfortCuisine}
                 setComfortCuisine={setComfortCuisine}
                 comfortDish={comfortDish}
@@ -122,6 +188,8 @@ function App() {
                 allergenFilter={allergenFilter}
                 setAllergenFilter={setAllergenFilter}
                 onTranslate={handleTranslate}
+                loading={translateLoading}
+                error={translateError}
               />
             )}
             
@@ -138,6 +206,7 @@ function App() {
             
             {currentScreen === 'recipes' && (
               <Recipes 
+                recipes={recipes}
                 onSelectRecipe={handleSelectRecipe}
               />
             )}
@@ -150,11 +219,13 @@ function App() {
             )}
             
             {currentScreen === 'restaurants' && (
-              <Restaurants />
+              <Restaurants restaurants={restaurants} />
             )}
             
             {currentScreen === 'allergens' && (
               <Allergens 
+                commonAllergens={commonAllergens}
+                allergenSubstitutes={allergenSubstitutes}
                 selectedAllergens={selectedAllergens}
                 toggleAllergen={toggleAllergen}
               />
@@ -163,6 +234,7 @@ function App() {
             {currentScreen === 'profile' && (
               <Profile 
                 userProfile={userProfile}
+                commonAllergens={commonAllergens}
                 addAllergen={addUserAllergen}
                 removeAllergen={removeUserAllergen}
               />

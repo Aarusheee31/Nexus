@@ -1,9 +1,10 @@
 import React from 'react';
 import { Lightbulb, AlertCircle } from 'lucide-react';
-import { COMFORT_CUISINES, TARGET_CUISINES } from '../data/mockData';
 import './Pages.css';
 
 const Home = ({ 
+  comfortCuisines = [],
+  targetCuisines = [],
   comfortCuisine, 
   setComfortCuisine,
   comfortDish,
@@ -12,7 +13,9 @@ const Home = ({
   setTargetCuisine,
   allergenFilter,
   setAllergenFilter,
-  onTranslate
+  onTranslate,
+  loading = false,
+  error = null,
 }) => {
   return (
     <div className="screen-content animate-fade-in">
@@ -42,7 +45,7 @@ const Home = ({
             className="form-select"
           >
             <option value="">Select cuisine...</option>
-            {COMFORT_CUISINES.map(cuisine => (
+            {comfortCuisines.map(cuisine => (
               <option key={cuisine} value={cuisine}>{cuisine}</option>
             ))}
           </select>
@@ -67,7 +70,7 @@ const Home = ({
             className="form-select"
           >
             <option value="">Select target cuisine...</option>
-            {TARGET_CUISINES.map(cuisine => (
+            {targetCuisines.map(cuisine => (
               <option key={cuisine} value={cuisine}>{cuisine}</option>
             ))}
           </select>
@@ -87,12 +90,17 @@ const Home = ({
         </div>
       </div>
 
+      {error && (
+        <p className="error-message" style={{ color: '#e74c3c', marginBottom: 16 }}>
+          {error}
+        </p>
+      )}
       <button
         onClick={onTranslate}
-        disabled={!comfortCuisine || !comfortDish || !targetCuisine}
+        disabled={!comfortCuisine || !comfortDish || !targetCuisine || loading}
         className="cta-button"
       >
-        Translate My Palate
+        {loading ? 'Finding matches...' : 'Translate My Palate'}
       </button>
     </div>
   );

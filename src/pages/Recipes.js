@@ -1,9 +1,8 @@
 import React from 'react';
 import { Search, Clock, Users } from 'lucide-react';
-import { MOCK_RECIPES } from '../data/mockData';
 import './Pages.css';
 
-const Recipes = ({ onSelectRecipe }) => {
+const Recipes = ({ recipes = {}, onSelectRecipe }) => {
   return (
     <div className="screen-content animate-fade-in">
       <div className="screen-header-center">
@@ -21,7 +20,7 @@ const Recipes = ({ onSelectRecipe }) => {
       </div>
 
       <div className="recipes-grid">
-        {Object.values(MOCK_RECIPES).map((recipe, index) => (
+        {Object.values(recipes).map((recipe, index) => (
           <div 
             key={index}
             className="recipe-preview-card"
@@ -29,7 +28,7 @@ const Recipes = ({ onSelectRecipe }) => {
           >
             <div className="recipe-preview-header">
               <span className="recipe-preview-emoji">{recipe.image}</span>
-              <span className="difficulty-badge">{recipe.difficulty}</span>
+              <span className="difficulty-badge">{recipe.difficulty || 'Easy'}</span>
             </div>
             <h3 className="recipe-preview-title">{recipe.name}</h3>
             <div className="recipe-preview-meta">

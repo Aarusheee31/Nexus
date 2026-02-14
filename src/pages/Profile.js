@@ -1,9 +1,8 @@
 import React from 'react';
 import { User, AlertCircle, ChefHat, X } from 'lucide-react';
-import { COMMON_ALLERGENS } from '../data/mockData';
 import './Pages.css';
 
-const Profile = ({ userProfile, addAllergen, removeAllergen }) => {
+const Profile = ({ userProfile, commonAllergens = [], addAllergen, removeAllergen }) => {
   return (
     <div className="screen-content animate-fade-in">
       <div className="profile-header">
@@ -52,7 +51,7 @@ const Profile = ({ userProfile, addAllergen, removeAllergen }) => {
             className="form-select"
           >
             <option value="">Add allergen...</option>
-            {COMMON_ALLERGENS.filter(a => !userProfile.allergens.includes(a)).map(allergen => (
+            {commonAllergens.filter(a => !userProfile.allergens.includes(a)).map(allergen => (
               <option key={allergen} value={allergen}>{allergen}</option>
             ))}
           </select>
