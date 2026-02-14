@@ -338,6 +338,49 @@
   display: flex;
   gap: 12px;
 }
+.emotional-metrics {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metric-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #5a5a5a;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+.metric-bar-container {
+  flex: 1;
+  height: 12px;
+  background: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.metric-bar {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.metric-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a4a4a;
+  min-width: 45px;
+  text-align: right;
+}
 
 /* ==================== RECIPE DETAIL ==================== */
 .recipe-card {
