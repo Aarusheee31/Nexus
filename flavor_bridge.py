@@ -7,22 +7,56 @@ from __future__ import annotations
 import math
 import requests
 from typing import Any
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 from src.data import mock_data
 
 # --- API Configuration ---
 API_BASE_URL = "https://api.foodoscope.com/recipe2-api"
-API_TOKEN = os.getenv("API_KEY")
-if not API_TOKEN:
-    raise ValueError("API_KEY not found in environment variables")
-
+API_TOKEN = "Y2OYhJpk2OjKmCic-fmVCm_BPXuhBc2N75hZukqjQstOyFPF"
 API_HEADERS = {
     "Authorization": f"Bearer {API_TOKEN}",
     "Accept": "application/json"
+}
+
+# --- Common Ingredients Database ---
+COMMON_INGREDIENTS = [
+    "water", "cinnamon", "breadcrumb", "flour tortilla", "lemon juice", "lime juice",
+    "white wine", "red wine", "flour", "purpose flour", "soy sauce", "tomato sauce",
+    "butter", "milk", "vegetable broth", "cream mushroom soup", "sesame oil",
+    "avocado", "steak", "salmon fillet", "broccoli", "artichoke heart", "lemon",
+    "orange juice", "mushroom", "button mushroom", "garlic clove", "garlic", "vanilla",
+    "black bean", "cornstarch", "corn", "egg", "beef", "almond", "walnut", "bay leaf",
+    "olive oil", "vegetable oil", "shallot", "shrimp", "black pepper", "pepper",
+    "onion", "tomato"
+]
+
+# Create lowercase version for matching
+COMMON_INGREDIENTS_LOWER = [ing.lower() for ing in COMMON_INGREDIENTS]
+
+# --- Texture Keywords ---
+TEXTURE_KEYWORDS = {
+    "creamy": ["cream", "milk", "butter", "cheese", "coconut milk", "yogurt", "sour cream"],
+    "crunchy": ["crispy", "fried", "toasted", "nuts", "breadcrumb", "crackers"],
+    "soft": ["simmer", "boil", "mash", "puree", "tender", "soft"],
+    "chewy": ["pasta", "noodles", "rice", "bread", "dough"],
+    "crispy": ["fry", "roast", "bake", "crisp", "sear"],
+    "smooth": ["blend", "puree", "strain", "smooth", "silky"],
+    "chunky": ["dice", "chop", "cube", "chunks", "pieces"],
+    "tender": ["braise", "slow cook", "stew", "tender", "fall apart"],
+}
+
+# --- Comfort Level Keywords ---
+COMFORT_KEYWORDS = {
+    "high_comfort": ["soup", "stew", "curry", "casserole", "pot", "simmer", "braise", "comfort", "hearty", "warm"],
+    "medium_comfort": ["pasta", "rice", "noodles", "bowl", "bake"],
+    "light": ["salad", "fresh", "grilled", "steamed", "light", "healthy"],
+}
+
+# --- Adaptability Factors ---
+ADAPTABILITY_KEYWORDS = {
+    "easy_swap": ["chicken", "beef", "pork", "tofu", "shrimp"],  # Easy protein swaps
+    "common_techniques": ["simmer", "stir", "cook", "heat", "add", "mix"],  # Common cooking methods
+    "complex_techniques": ["temper", "fold", "knead", "proof", "reduce", "emulsify"],  # Complex techniques
 }
 
 # --- Static data from mock_data (for scoring logic only) ---
@@ -139,7 +173,7 @@ def fetch_recipes_by_region(region: str, diet: str = "", limit: int = 50) -> lis
         params = {
             "region": normalized_region,
             "diet": 'vegan',
-            "limit": limit,
+            "limit": limit
         }
         if diet:
             params["diet"] = diet
@@ -235,6 +269,32 @@ def _parse_processes(processes_str: str) -> list[str]:
     return [p.strip() for p in str(processes_str).split("||") if p.strip()]
 
 
+def extract_ingredients_from_instructions(instructions: list[str]) -> list[str]:
+    """
+    Extract ingredients from cooking instructions by matching against COMMON_INGREDIENTS.
+    
+    Args:
+        instructions: List of cooking step strings
+        
+    Returns:
+        List of matched ingredients found in the instructions
+    """
+    found_ingredients = set()
+    
+    # Combine all instructions into one text for searching
+    full_text = " ".join(instructions).lower()
+    
+    # Search for each common ingredient in the instructions
+    for ingredient in COMMON_INGREDIENTS_LOWER:
+        if ingredient in full_text:
+            found_ingredients.add(ingredient)
+    
+    # Convert to sorted list for consistency
+    result = sorted(list(found_ingredients))
+    
+    return result
+
+
 def _get_ingredients_from_title(title: str) -> list[str]:
     """Infer ingredients from recipe title for allergen check."""
     t = title.lower()
@@ -307,6 +367,168 @@ def flavor_similarity(source_vector: dict, target_vector: dict) -> float:
     return max(0.0, min(1.0, dot / (mag_s * mag_t)))
 
 
+def ingredient_similarity(source_ingredients: list[str], target_ingredients: list[str]) -> float:
+    """
+    Calculate similarity between two ingredient lists using Jaccard similarity.
+    
+    Jaccard similarity = (intersection) / (union)
+    
+    Args:
+        source_ingredients: List of ingredients from source recipe
+        target_ingredients: List of ingredients from target recipe
+        
+    Returns:
+        Similarity score between 0.0 and 1.0
+    """
+    if not source_ingredients or not target_ingredients:
+        return 0.0
+    
+    # Convert to sets for intersection/union operations
+    source_set = set(ing.lower().strip() for ing in source_ingredients)
+    target_set = set(ing.lower().strip() for ing in target_ingredients)
+    
+    # Calculate Jaccard similarity
+    intersection = len(source_set & target_set)
+    union = len(source_set | target_set)
+    
+    if union == 0:
+        return 0.0
+    
+    similarity = intersection / union
+    
+    return similarity
+
+
+def detect_comfort_level(title: str, instructions: list[str], method: str) -> float:
+    """
+    Detect comfort level of a dish (0.0 to 1.0).
+    
+    High comfort: Soups, stews, slow-cooked dishes
+    Medium comfort: Pasta, rice dishes, casseroles
+    Light: Salads, grilled, fresh dishes
+    
+    Returns:
+        Comfort score between 0.0 (light) and 1.0 (very comforting)
+    """
+    text = (title + " " + " ".join(instructions)).lower()
+    
+    high_count = sum(1 for kw in COMFORT_KEYWORDS["high_comfort"] if kw in text)
+    medium_count = sum(1 for kw in COMFORT_KEYWORDS["medium_comfort"] if kw in text)
+    light_count = sum(1 for kw in COMFORT_KEYWORDS["light"] if kw in text)
+    
+    # Additional boost for slow cooking methods
+    if method == "slow_saucy":
+        high_count += 2
+    
+    total = high_count + medium_count + light_count
+    if total == 0:
+        return 0.5  # Default moderate comfort
+    
+    # Weighted score: high comfort gets more weight
+    score = (high_count * 1.0 + medium_count * 0.5 + light_count * 0.2) / total
+    return min(1.0, score)
+
+
+def detect_texture_profile(title: str, instructions: list[str], ingredients: list[str]) -> dict[str, float]:
+    """
+    Detect texture profile of a dish.
+    
+    Returns:
+        Dictionary of texture types and their scores
+        Example: {"creamy": 0.4, "soft": 0.3, "chunky": 0.3}
+    """
+    text = (title + " " + " ".join(instructions) + " " + " ".join(ingredients)).lower()
+    
+    texture_scores = {}
+    for texture, keywords in TEXTURE_KEYWORDS.items():
+        count = sum(1 for kw in keywords if kw in text)
+        if count > 0:
+            texture_scores[texture] = count
+    
+    # Normalize to sum to 1.0
+    total = sum(texture_scores.values())
+    if total > 0:
+        texture_scores = {k: v / total for k, v in texture_scores.items()}
+    
+    return texture_scores
+
+
+def calculate_texture_similarity(source_texture: dict, target_texture: dict) -> float:
+    """
+    Calculate similarity between two texture profiles using cosine similarity.
+    
+    Returns:
+        Similarity score between 0.0 and 1.0
+    """
+    if not source_texture or not target_texture:
+        return 0.5  # Default moderate similarity
+    
+    all_textures = set(source_texture.keys()) | set(target_texture.keys())
+    
+    dot_product = sum(
+        source_texture.get(t, 0) * target_texture.get(t, 0) 
+        for t in all_textures
+    )
+    
+    mag_source = math.sqrt(sum(v * v for v in source_texture.values()))
+    mag_target = math.sqrt(sum(v * v for v in target_texture.values()))
+    
+    if mag_source == 0 or mag_target == 0:
+        return 0.5
+    
+    return dot_product / (mag_source * mag_target)
+
+
+def calculate_adaptability(source: dict, target: dict) -> float:
+    """
+    Calculate how easy it is to adapt source recipe to target recipe.
+    
+    Factors:
+    - Same cooking method = easier (40%)
+    - Common ingredients = easier (30%)
+    - Simple techniques = easier (20%)
+    - Similar proteins = easier (10%)
+    
+    Returns:
+        Adaptability score between 0.0 (hard) and 1.0 (easy)
+    """
+    score = 0.0
+    
+    # 1. Same cooking method (40%)
+    if source.get("method") == target.get("method"):
+        score += 0.4
+    
+    # 2. Ingredient overlap (30%)
+    ing_sim = ingredient_similarity(
+        source.get("ingredients_extracted", []),
+        target.get("ingredients_extracted", [])
+    )
+    score += 0.3 * ing_sim
+    
+    # 3. Technique complexity (20%)
+    # If both use common techniques, easier to adapt
+    source_inst = " ".join(source.get("instructions", [])).lower()
+    target_inst = " ".join(target.get("instructions", [])).lower()
+    
+    # Count common vs complex techniques
+    common_in_target = sum(1 for kw in ADAPTABILITY_KEYWORDS["common_techniques"] if kw in target_inst)
+    complex_in_target = sum(1 for kw in ADAPTABILITY_KEYWORDS["complex_techniques"] if kw in target_inst)
+    
+    if common_in_target > 0:
+        technique_score = common_in_target / (common_in_target + complex_in_target + 1)
+        score += 0.2 * technique_score
+    else:
+        score += 0.1  # Some baseline
+    
+    # 4. Protein similarity (10%)
+    if source.get("protein") and source.get("protein") == target.get("protein"):
+        score += 0.1
+    elif not source.get("protein") or not target.get("protein"):
+        score += 0.05  # Partial credit if one has no protein
+    
+    return min(1.0, score)
+
+
 def contains_allergen(ingredients: list[str], excluded: list[str]) -> bool:
     """Check if any ingredient matches excluded allergens."""
     expanded = set()
@@ -330,37 +552,108 @@ def _pairing_overlap(source_protein: str, target_ingredients: list[str]) -> floa
     return min(1.0, matches / max(1, len(MOCK_FOOD_PAIR["topSimilarEntities"])))
 
 
-def score_recipe(source: dict, target: dict) -> tuple[float, list[str]]:
-    """Score target vs source. Weights: method 0.4, flavor 0.35, protein 0.15, pairing 0.1."""
+def score_recipe(source: dict, target: dict) -> tuple[float, list[str], dict]:
+    """
+    Score target vs source recipe.
+    
+    Weights: 
+    - method: 0.30 (30%)
+    - flavor: 0.25 (25%)
+    - ingredient: 0.25 (25%)
+    - protein: 0.10 (10%)
+    - pairing: 0.10 (10%)
+    
+    Returns:
+        (score, reasons, detailed_metrics)
+        
+        detailed_metrics contains:
+        - comfort_similarity: 0-100%
+        - flavor_similarity: 0-100%
+        - adaptability: 0-100%
+        - texture_alignment: 0-100%
+        - ingredient_match: 0-100%
+    """
     reasons = []
-    mw, fw, pw, pairw = 0.4, 0.35, 0.15, 0.1
+    method_w = 0.30
+    flavor_w = 0.25
+    ingredient_w = 0.25
+    protein_w = 0.10
+    pairing_w = 0.10
 
+    # 1. Cooking Method Similarity (30%)
     src_m, tgt_m = source.get("method", ""), target.get("method", "")
     method_ok = 1.0 if src_m and src_m == tgt_m else 0.0
     if method_ok:
-        reasons.append("Both use similar cooking method (e.g. slow-simmered or stir-fried)")
+        reasons.append(f"✓ Same cooking method: {tgt_m}")
     else:
         reasons.append(f"Cooking style: {tgt_m} vs {src_m}")
 
+    # 2. Flavor Profile Similarity (25%)
     flavor_sim = flavor_similarity(source.get("flavor_vector", {}), target.get("flavor_vector", {}))
     if flavor_sim >= 0.6:
-        reasons.append("Similar aromatic and flavor profile")
+        reasons.append(f"✓ Similar flavor profile (score: {flavor_sim:.2f})")
     else:
         reasons.append(f"Flavor similarity: {flavor_sim:.2f}")
 
+    # 3. Ingredient Similarity (25%)
+    ingredient_sim = ingredient_similarity(
+        source.get("ingredients_extracted", []), 
+        target.get("ingredients_extracted", [])
+    )
+    if ingredient_sim >= 0.3:
+        common = set(source.get("ingredients_extracted", [])) & set(target.get("ingredients_extracted", []))
+        common_list = sorted(list(common))[:3]  # Show top 3
+        reasons.append(f"✓ Shared ingredients: {', '.join(common_list)}")
+    else:
+        reasons.append(f"Ingredient overlap: {ingredient_sim:.2f}")
+
+    # 4. Protein Type Match (10%)
     src_p, tgt_p = source.get("protein", ""), target.get("protein", "")
     protein_ok = 1.0 if src_p and src_p == tgt_p else 0.0
     if protein_ok:
-        reasons.append(f"Same protein type: {tgt_p}")
+        reasons.append(f"✓ Same protein: {tgt_p}")
     else:
-        reasons.append(f"Protein: {tgt_p} vs {src_p}")
+        if tgt_p:
+            reasons.append(f"Protein: {tgt_p} vs {src_p}")
 
-    pairing = _pairing_overlap(src_p, target.get("ingredients", []))
+    # 5. Food Pairing Overlap (10%)
+    pairing = _pairing_overlap(src_p, target.get("ingredients_extracted", []))
     if pairing >= 0.5:
-        reasons.append("Good food pairing overlap with your comfort dish")
+        reasons.append("✓ Good food pairing compatibility")
 
-    score = mw * method_ok + fw * flavor_sim + pw * protein_ok + pairw * pairing
-    return (score, reasons)
+    # Calculate weighted score
+    score = (method_w * method_ok + 
+             flavor_w * flavor_sim + 
+             ingredient_w * ingredient_sim +
+             protein_w * protein_ok + 
+             pairing_w * pairing)
+    
+    # ===== CALCULATE DETAILED METRICS FOR FRONTEND =====
+    
+    # Comfort Similarity (how similar the comfort levels are)
+    source_comfort = source.get("comfort_level", 0.5)
+    target_comfort = target.get("comfort_level", 0.5)
+    comfort_similarity = 1.0 - abs(source_comfort - target_comfort)  # Close comfort levels = high similarity
+    
+    # Texture Alignment (how similar the textures are)
+    texture_sim = calculate_texture_similarity(
+        source.get("texture_profile", {}),
+        target.get("texture_profile", {})
+    )
+    
+    # Adaptability (how easy to adapt from source to target)
+    adaptability = calculate_adaptability(source, target)
+    
+    # Detailed metrics dictionary (all as percentages 0-100)
+    detailed_metrics = {
+        "comfort_similarity": round(comfort_similarity * 100, 1),
+        "flavor_similarity": round(flavor_sim * 100, 1),
+        "adaptability": round(adaptability * 100, 1),
+        "texture_alignment": round(texture_sim * 100, 1),
+        "ingredient_match": round(ingredient_sim * 100, 1),
+    }
+    
+    return (score, reasons, detailed_metrics)
 
 
 def recommend_recipes(
@@ -393,6 +686,7 @@ def recommend_recipes(
         src_protein = detect_protein(source_recipe_title)
         src_flavor = _infer_flavor_style(source_recipe_title, src_method)
         src_ingredients = _get_ingredients_from_title(source_recipe_title)
+        src_ingredients_extracted = []  # No instructions to extract from
     else:
         # Get instructions for source recipe
         recipe_id = source_recipe_data.get("Recipe_id", "")
@@ -407,17 +701,33 @@ def recommend_recipes(
             src_inst = ["cook"]
             print(f"\n⚠️  No instructions available, using default")
         
+        # EXTRACT INGREDIENTS FROM INSTRUCTIONS
+        src_ingredients_extracted = extract_ingredients_from_instructions(src_inst)
+        print(f"\n🥘 Extracted {len(src_ingredients_extracted)} ingredients from instructions:")
+        if src_ingredients_extracted:
+            print(f"   {', '.join(src_ingredients_extracted[:10])}")
+            if len(src_ingredients_extracted) > 10:
+                print(f"   ... and {len(src_ingredients_extracted) - 10} more")
+        
         src_method = detect_cooking_method(src_inst)
         src_title = source_recipe_data.get("Recipe_title", source_recipe_title)
         src_protein = detect_protein(src_title)
         src_flavor = _infer_flavor_style(src_title, src_method)
         src_ingredients = _get_ingredients_from_title(src_title)
+        
+        # Calculate comfort level and texture profile
+        src_comfort = detect_comfort_level(src_title, src_inst, src_method)
+        src_texture = detect_texture_profile(src_title, src_inst, src_ingredients_extracted)
 
     source_profile = {
         "method": src_method,
         "flavor_vector": src_flavor,
         "protein": src_protein,
         "ingredients": src_ingredients,
+        "ingredients_extracted": src_ingredients_extracted,
+        "instructions": src_inst,  # Store for adaptability calculation
+        "comfort_level": src_comfort,
+        "texture_profile": src_texture,
     }
 
     print(f"\n{'─'*60}")
@@ -425,11 +735,21 @@ def recommend_recipes(
     print(f"{'─'*60}")
     print(f"Cooking Method: {src_method}")
     print(f"Protein Type: {src_protein or 'None detected'}")
+    print(f"Comfort Level: {source_profile.get('comfort_level', 0) * 100:.0f}%")
     print(f"Flavor Vector: {src_flavor}")
-    print(f"Ingredients: {src_ingredients}")
+    if source_profile.get('texture_profile'):
+        texture_str = ', '.join([f"{k}: {v*100:.0f}%" for k, v in list(source_profile['texture_profile'].items())[:3]])
+        print(f"Texture Profile: {texture_str}")
+    print(f"Ingredients (from title): {src_ingredients}")
+    print(f"Ingredients (extracted): {len(source_profile.get('ingredients_extracted', []))} found")
+    if source_profile.get('ingredients_extracted'):
+        ing_list = source_profile['ingredients_extracted'][:8]
+        print(f"  Top ingredients: {', '.join(ing_list)}")
+        if len(source_profile['ingredients_extracted']) > 8:
+            print(f"  ... and {len(source_profile['ingredients_extracted']) - 8} more")
 
     # Step 2: Fetch target cuisine recipes from API
-    target_recipes = fetch_recipes_by_region(target_cuisine, limit=10)
+    target_recipes = fetch_recipes_by_region(target_cuisine, limit=100)
     
     if not target_recipes:
         print(f"\n❌ No recipes found for {target_cuisine}")
@@ -478,19 +798,30 @@ def recommend_recipes(
         if not tgt_inst:
             tgt_inst = ["cook"]
         
+        # EXTRACT INGREDIENTS FROM TARGET RECIPE INSTRUCTIONS
+        tgt_ingredients_extracted = extract_ingredients_from_instructions(tgt_inst)
+        
         tgt_method = detect_cooking_method(tgt_inst)
         tgt_protein = detect_protein(title)
         tgt_flavor = _infer_flavor_style(title, tgt_method)
+        
+        # Calculate comfort level and texture profile for target
+        tgt_comfort = detect_comfort_level(title, tgt_inst, tgt_method)
+        tgt_texture = detect_texture_profile(title, tgt_inst, tgt_ingredients_extracted)
 
         target_profile = {
             "method": tgt_method,
             "flavor_vector": tgt_flavor,
             "protein": tgt_protein,
             "ingredients": tgt_ingredients,
+            "ingredients_extracted": tgt_ingredients_extracted,
+            "instructions": tgt_inst,  # For adaptability calculation
+            "comfort_level": tgt_comfort,
+            "texture_profile": tgt_texture,
         }
 
-        score, reasons = score_recipe(source_profile, target_profile)
-        scored.append((score, {"Recipe_title": title, "recipe": recipe}, reasons))
+        score, reasons, detailed_metrics = score_recipe(source_profile, target_profile)
+        scored.append((score, {"Recipe_title": title, "recipe": recipe, "metrics": detailed_metrics}, reasons))
 
     if filtered_count > 0:
         print(f"🚫 Filtered out {filtered_count} recipes due to allergens")
@@ -507,7 +838,18 @@ def recommend_recipes(
     # Show top 10 scores for debugging
     for i, (score, data, reasons) in enumerate(scored[:10], 1):
         print(f"{i}. {data['Recipe_title']}")
-        print(f"   Score: {score:.3f}")
+        print(f"   Overall Score: {score:.3f}")
+        
+        # Show detailed metrics if available
+        if "metrics" in data:
+            metrics = data["metrics"]
+            print(f"   📊 Metrics:")
+            print(f"      Comfort: {metrics.get('comfort_similarity', 0):.0f}% | "
+                  f"Flavor: {metrics.get('flavor_similarity', 0):.0f}% | "
+                  f"Adaptability: {metrics.get('adaptability', 0):.0f}%")
+            print(f"      Texture: {metrics.get('texture_alignment', 0):.0f}% | "
+                  f"Ingredients: {metrics.get('ingredient_match', 0):.0f}%")
+        
         print(f"   {reasons[0] if reasons else 'No explanation'}")
     
     # ALWAYS return at least 3 recipes
@@ -542,6 +884,14 @@ def recommend_recipes(
             "cook_time": s[1]["recipe"].get("cook_time", ""),
             "prep_time": s[1]["recipe"].get("prep_time", ""),
             "servings": s[1]["recipe"].get("servings", ""),
+            # NEW: Detailed similarity metrics for frontend
+            "similarity_metrics": s[1].get("metrics", {
+                "comfort_similarity": 0.0,
+                "flavor_similarity": 0.0,
+                "adaptability": 0.0,
+                "texture_alignment": 0.0,
+                "ingredient_match": 0.0,
+            }),
         }
         for s in scored[:top_count]
     ]
