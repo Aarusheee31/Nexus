@@ -30,13 +30,12 @@ TARGET_CUISINES = [
 # -----------------------------------------------------------------------------
 
 COMMON_ALLERGENS = [
-    "milk",
-    "garlic",
+    "papaya",
+    "beans",
+    "bread",
+    "wort",
     "egg",
-    "beef",
-    "walnut",
-    "onion",
-    "almond",
+    "orange",
 ]
 
 ALLERGEN_SUBSTITUTES = {

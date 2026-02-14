@@ -16,9 +16,9 @@ load_dotenv()
 
 # --- API Configuration ---
 API_BASE_URL = "https://api.foodoscope.com/recipe2-api"
-API_TOKEN = os.getenv("API_TOKEN") # Get the token from environment variables
+API_KEY = os.getenv("API_KEY") # Get the token from environment variables
 API_HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}",
+    "Authorization": f"Bearer {API_KEY}",
     "Accept": "application/json"
 }
 
@@ -167,12 +167,11 @@ def _normalize_region_name(region: str) -> str:
     return region
 
 
-def fetch_recipes_by_region(region: str, diet: str = "", limit: int = 50) -> list[dict]:
+def fetch_recipes_by_region(region: str, diet: str = "", limit: int = 10) -> list[dict]:
     """Fetch recipes from API by region and optional diet."""
     try:
         # Normalize region name
         normalized_region = _normalize_region_name(region)
-        
         url = f"{API_BASE_URL}/recipe/region-diet/region-diet"
         params = {
             "region": normalized_region,
@@ -690,6 +689,8 @@ def recommend_recipes(
         src_protein = detect_protein(source_recipe_title)
         src_flavor = _infer_flavor_style(source_recipe_title, src_method)
         src_ingredients = _get_ingredients_from_title(source_recipe_title)
+        src_comfort = 0.5
+        src_texture = {}
         src_ingredients_extracted = []  # No instructions to extract from
     else:
         # Get instructions for source recipe
@@ -753,7 +754,7 @@ def recommend_recipes(
             print(f"  ... and {len(source_profile['ingredients_extracted']) - 8} more")
 
     # Step 2: Fetch target cuisine recipes from API
-    target_recipes = fetch_recipes_by_region(target_cuisine, limit=100)
+    target_recipes = fetch_recipes_by_region(target_cuisine, limit=10)
     
     if not target_recipes:
         print(f"\n❌ No recipes found for {target_cuisine}")
