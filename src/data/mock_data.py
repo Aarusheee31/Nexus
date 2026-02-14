@@ -10,7 +10,6 @@ SINGLE SOURCE OF TRUTH: All app data (Python backend + React UI via API).
 COMFORT_CUISINES = [
     "Korean",
     "Indian Subcontinent",
-    "Chinese and Mongolian",
     "Japanese",
     "Italian",
     "Southeast Asian",
@@ -20,7 +19,6 @@ COMFORT_CUISINES = [
 TARGET_CUISINES = [
     "Korean",
     "Indian Subcontinent",
-    "Chinese and Mongolian",
     "Japanese",
     "Italian",
     "Southeast Asian",
