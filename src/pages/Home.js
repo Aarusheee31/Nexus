@@ -3,6 +3,7 @@ import { AlertCircle, Lightbulb } from 'lucide-react';
 import './Pages.css';
 
 const Home = ({ 
+  userName = '',
   comfortCuisines = [],
   targetCuisines = [],
   comfortCuisine, 
@@ -46,7 +47,9 @@ const Home = ({
         </div>
       </div>
 
-      <h1>Hi Kritika!</h1>
+      <h1 className="main-title" style={{ fontSize: '22px', marginBottom: 4 }}>
+          Hi{userName ? ` ${userName}` : ' there'}!
+        </h1>
 
       <div className="form-group">
         <label className="form-label">

@@ -93,7 +93,7 @@ const Allergens = ({ commonAllergens = [], selectedAllergens, toggleAllergen }) 
                 {loading[allergen] && (
                   <div className="loading-state">
                     <Loader size={18} className="spin" />
-                    <span>Finding molecular matches...</span>
+                    <span>Finding alternatives for you to enjoy!</span>
                   </div>
                 )}
 
