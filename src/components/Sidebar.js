@@ -1,10 +1,10 @@
 import React from 'react';
-import { ChefHat, Home, BookOpen, MapPin, AlertCircle, User, Settings, X, Lightbulb } from 'lucide-react';
+import { UtensilsCrossed, Home, BookOpen, MapPin, AlertCircle, User, Settings, X, Lightbulb } from 'lucide-react';
 import './Sidebar.css';
 
 const Sidebar = ({ currentScreen, setCurrentScreen, sidebarOpen, setSidebarOpen }) => {
   const navItems = [
-    { id: 'home', label: 'Flavor Translator', icon: <Home size={20} /> },
+    { id: 'home', label: 'Flavour Translator', icon: <Home size={20} /> },
     { id: 'recipes', label: 'Recipe Finder', icon: <BookOpen size={20} /> },
     { id: 'restaurants', label: 'Restaurants', icon: <MapPin size={20} /> },
     { id: 'allergens', label: 'Allergen Guide', icon: <AlertCircle size={20} /> },
@@ -19,7 +19,7 @@ const Sidebar = ({ currentScreen, setCurrentScreen, sidebarOpen, setSidebarOpen 
 
   return (
     <>
-      {/* Mobile overlay */}
+      
       {sidebarOpen && (
         <div 
           className="mobile-overlay"
@@ -27,29 +27,29 @@ const Sidebar = ({ currentScreen, setCurrentScreen, sidebarOpen, setSidebarOpen 
         />
       )}
       
-      {/* Sidebar */}
+     
       <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-content">
-          {/* Logo/Header */}
+          
           <div className="sidebar-header">
             <div className="sidebar-logo">
               <div className="logo-icon">
-                <ChefHat size={28} />
+                <UtensilsCrossed size={30} />
               </div>
               <div className="logo-text">
-                <h2>FlavorBridge</h2>
-                <p>Taste Translator</p>
+                <h2>PalatePal</h2>
+                <p>Translating Taste</p>
               </div>
             </div>
             <button 
               onClick={() => setSidebarOpen(false)}
               className="sidebar-close"
             >
-              <X size={20} />
+              <X size={15} />
             </button>
           </div>
 
-          {/* Navigation */}
+          
           <nav className="nav-items">
             {navItems.map(item => (
               <button
@@ -63,7 +63,7 @@ const Sidebar = ({ currentScreen, setCurrentScreen, sidebarOpen, setSidebarOpen 
             ))}
           </nav>
 
-          {/* Footer Tip */}
+          
           <div className="sidebar-footer">
             <div className="tip-card-sidebar">
               <Lightbulb size={18} />

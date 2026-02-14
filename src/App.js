@@ -166,8 +166,8 @@ function App() {
             <Menu size={24} />
           </button>
           <div className="mobile-logo">
-            <ChefHat size={24} />
-            <span>FlavorBridge</span>
+            <Utensils size={24} />
+            <span>PalatePal</span>
           </div>
           <div className="mobile-spacer" />
         </div>

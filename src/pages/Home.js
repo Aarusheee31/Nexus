@@ -20,25 +20,25 @@ const Home = ({
   return (
     <div className="screen-content animate-fade-in">
       <div className="screen-header-center">
-        <h1 className="main-title">
-          Find Comfort in <span className="text-highlight">New Cuisines</span>
+        <h1 style={{ fontSize: '25px', fontWeight: 'bold', fontFamily: 'sans-serif' }} className="main-title">
+          Helping You Find Comfort in <span className="text-highlight">New Cuisines</span>
         </h1>
-        <p className="subtitle">Translate your familiar flavors into local dishes</p>
+        <p style={{ fontSize: '14px', color: '#6B6B6B' }} className="subtitle">Translate your familiar flavours into local dishes!</p>
       </div>
 
       <div className="tip-card-main">
-        <Lightbulb size={24} className="tip-icon" />
+        <Apple size={24} className="tip-icon" />
         <div>
           <p className="tip-title-main">How it works</p>
           <p className="tip-text-main">
-            We analyze flavor profiles, textures, and comfort factors to find dishes that feel familiar in new cuisines
+           We decode the flavour DNA of your comfort dish and match it to local ingredients that recreate the same taste experience
           </p>
         </div>
       </div>
 
       <div className="form-container">
         <div className="form-group">
-          <label className="form-label">Your Comfort Cuisine</label>
+          <label className="form-label">Cuisine You Are Missing:</label>
           <select
             value={comfortCuisine}
             onChange={(e) => setComfortCuisine(e.target.value)}
@@ -57,13 +57,13 @@ const Home = ({
             type="text"
             value={comfortDish}
             onChange={(e) => setComfortDish(e.target.value)}
-            placeholder="e.g., Rajma Chawal, Mac and Cheese..."
+            placeholder="e.g., Chicken Curry, Tacos..."
             className="form-input"
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Discover in Cuisine</label>
+          <label className="form-label">Cuisine Near You?</label>
           <select
             value={targetCuisine}
             onChange={(e) => setTargetCuisine(e.target.value)}

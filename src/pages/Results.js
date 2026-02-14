@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import './Pages.css';
 
+
+
 const Results = ({ 
   matchResults, 
   comfortDish,
@@ -40,6 +42,9 @@ const Results = ({
                 <span className="match-score">{match.matchScore}%</span>
               </div>
             </div>
+           
+
+
 
             <div className="progress-container">
               <div 

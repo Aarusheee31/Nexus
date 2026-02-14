@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChefHat } from 'lucide-react';
+import { Utensils } from 'lucide-react';
 import './Pages.css';
 
 const Settings = ({ settings, updateSettings }) => {
@@ -56,6 +56,7 @@ const Settings = ({ settings, updateSettings }) => {
               <option>Vegan</option>
               <option>Pescatarian</option>
               <option>Gluten-Free</option>
+              <option>Lactose-Free</option>
             </select>
           </div>
 
@@ -67,10 +68,7 @@ const Settings = ({ settings, updateSettings }) => {
               className="form-select"
             >
               <option>English</option>
-              <option>Spanish</option>
-              <option>French</option>
               <option>Hindi</option>
-              <option>Mandarin</option>
             </select>
           </div>
         </div>
@@ -103,9 +101,9 @@ const Settings = ({ settings, updateSettings }) => {
       </div>
 
       <div className="about-card">
-        <ChefHat size={48} className="about-icon" />
-        <p className="about-version">FlavorBridge v1.0</p>
-        <p className="about-tagline">Making world cuisines accessible to everyone</p>
+        <Utensils size={48} className="about-icon" />
+        <p className="about-version">PalatePal v1.0</p>
+        <p className="about-tagline">Connecting world...one ingredient at a time</p>
       </div>
     </div>
   );

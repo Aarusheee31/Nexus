@@ -1,11 +1,26 @@
-/* ==================== LAYOUT ==================== */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #F7F7F5 0%, #FFF9E6 50%, #F0F9F0 100%);
+
+
+  .app-container {
+  max-width: 80%;
+  margin: 40px auto;
+  min-height: 90vh;
+
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border-radius: 20px;
+  padding: 24px;
+
+  box-shadow: 
+    0 10px 30px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
 }
 
-/* ==================== MAIN WRAPPER ==================== */
+
+
 .main-wrapper {
   flex: 1;
   margin-left: 280px;
@@ -29,7 +44,7 @@
   max-width: 640px;
 }
 
-/* ==================== MOBILE RESPONSIVE ==================== */
+
 @media (max-width: 768px) {
   .main-wrapper {
     margin-left: 0;
@@ -40,11 +55,13 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px;
+    font-size: 22px;
     background: white;
     border-bottom: 1px solid #E5E5E5;
     position: sticky;
     top: 0;
     z-index: 100;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
   }
 
   .menu-button {
