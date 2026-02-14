@@ -16,9 +16,9 @@ load_dotenv()
 
 # --- API Configuration ---
 API_BASE_URL = "https://api.foodoscope.com/recipe2-api"
-API_TOKEN = os.getenv("API_TOKEN") # Get the token from environment variables
+API_KEY = os.getenv("API_KEY") # Get the token from environment variables
 API_HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}",
+    "Authorization": f"Bearer {API_KEY}",
     "Accept": "application/json"
 }
 
@@ -690,7 +690,9 @@ def recommend_recipes(
         src_protein = detect_protein(source_recipe_title)
         src_flavor = _infer_flavor_style(source_recipe_title, src_method)
         src_ingredients = _get_ingredients_from_title(source_recipe_title)
-        src_ingredients_extracted = []  # No instructions to extract from
+        src_ingredients_extracted = [] 
+        src_comfort = 0.5  # ADD THIS LINE - Default comfort level
+        src_texture = {} # No instructions to extract from
     else:
         # Get instructions for source recipe
         recipe_id = source_recipe_data.get("Recipe_id", "")

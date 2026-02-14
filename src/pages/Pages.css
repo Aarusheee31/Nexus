@@ -338,6 +338,63 @@
   display: flex;
   gap: 12px;
 }
+/* Emotional Metrics Styling */
+.emotional-metrics {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.metric-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.metric-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #5a5a5a;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+.metric-bar-container {
+  flex: 1;
+  height: 12px;
+  background: #f0f0f0;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.metric-bar {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.metric-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a4a4a;
+  min-width: 45px;
+  text-align: right;
+}
+
+/* Remove old explanation text */
+.result-explanation {
+  display: none;
+}
+
+/* Remove ingredient tags since metrics are more important */
+.ingredient-tags {
+  display: none;
+}
+
+
 
 /* ==================== RECIPE DETAIL ==================== */
 .recipe-card {
@@ -603,9 +660,10 @@
 }
 
 .restaurants-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+display: grid;
+ grid-template-columns: repeat(3,1fr);
+  gap: 35px;
+  
 }
 
 .restaurant-card {
@@ -613,7 +671,7 @@
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #E5E5E5;
+  border: 1px solid #439a0d;
   transition: all 0.3s;
 }
 
@@ -704,6 +762,17 @@
 .btn-outline-small:hover {
   background: #E8F5E9;
 }
+@media (max-width: 768px) {
+  .restaurants-grid {
+    display: grid;
+    grid-template-columns: 1fr;   /* single column */
+    gap: 20px;
+    justify-items: center;        /* centers cards horizontally */
+  }
+}
+  
+
+
 
 /* ==================== ALLERGENS ==================== */
 .alert-card {
@@ -1103,4 +1172,50 @@
   .stats-grid {
     grid-template-columns: 1fr;
   }
+  
+
+  .results-grid {
+    padding: 0 16px;
+  }
+
+  .result-card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .screen-content {
+    padding: 16px 0;
+  }
+
+  .comfort-metric {
+  margin-bottom: 12px;
 }
+
+.comfort-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.comfort-track {
+  height: 6px;
+  border-radius: 6px;
+  background: #eee;
+  margin-top: 4px;
+}
+.mobile-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  background: #ffffff;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  z-index: 100;
+}
+
+}
+
+

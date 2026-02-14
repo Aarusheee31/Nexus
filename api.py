@@ -26,9 +26,9 @@ from src.data.mock_data import (
 import requests
 
 # Get API token from environment variable
-API_TOKEN = os.getenv('FOODOSCOPE_API_TOKEN', 'Y2OYhJpk2OjKmCic-fmVCm_BPXuhBc2N75hZukqjQstOyFPF')
+API_KEY = os.getenv('FOODOSCOPE_API_KEY', '6cif0UCdTyhRuWV485SlSgTOC3vsFe2NRkF0egARepGxdZis')
 API_HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}",
+    "Authorization": f"Bearer {API_KEY}",
     "Accept": "application/json"
 }
 
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     print("╚═══════════════════════════════════════════════════════════════════════════════╝")
     print("")
     print("  ✅ Using REAL Foodoscope API for recipe data")
-    print(f"  🔑 API Token: {API_TOKEN[:20]}..." if API_TOKEN else "  ❌ No API token found!")
+    print(f"  🔑 API Token: {API_KEY[:20]}..." if API_KEY else "  ❌ No API token found!")
     print("  🌐 Server: http://localhost:5000")
     print("  📡 CORS enabled for: http://localhost:3000")
     print("")

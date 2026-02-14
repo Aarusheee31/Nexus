@@ -34,7 +34,7 @@ const Recipes = () => {
     setHasSearched(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/recipe/search', {
+      const response = await fetch('http://127.0.0.1:5000/api/recipe/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +188,8 @@ const Recipes = () => {
       {/* Empty State (before any search) */}
       {!hasSearched && !isLoading && (
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <span style={{ fontSize: '64px' }}>🔍</span>
+          <Search size={79} />
+          
           <h3 style={{ marginTop: '16px', color: '#1E1E1E', fontSize: '20px' }}>
             Start searching for recipes
           </h3>
