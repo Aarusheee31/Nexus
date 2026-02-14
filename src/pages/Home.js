@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lightbulb, AlertCircle } from 'lucide-react';
+import { Lightbulb, AlertCircle, Apple } from 'lucide-react';
 import { COMFORT_CUISINES, TARGET_CUISINES } from '../data/mockData';
 import './Pages.css';
 
@@ -20,22 +20,22 @@ const Home = ({
         <h1 style={{ fontSize: '25px', fontWeight: 'bold', fontFamily: 'sans-serif' }} className="main-title">
           Helping You Find Comfort in <span className="text-highlight">New Cuisines</span>
         </h1>
-        <p style={{ fontSize: '14px', color: '#6B6B6B' }} className="subtitle">Translate your familiar flavors into local dishes!</p>
+        <p style={{ fontSize: '14px', color: '#6B6B6B' }} className="subtitle">Translate your familiar flavours into local dishes!</p>
       </div>
 
       <div className="tip-card-main">
-        <Lightbulb size={24} className="tip-icon" />
+        <Apple size={24} className="tip-icon" />
         <div>
           <p className="tip-title-main">How it works</p>
           <p className="tip-text-main">
-            We analyze flavour profiles, textures, and comfort factors to find dishes that feel familiar in new cuisines
+           We decode the flavour DNA of your comfort dish and match it to local ingredients that recreate the same taste experience
           </p>
         </div>
       </div>
 
       <div className="form-container">
         <div className="form-group">
-          <label className="form-label">Cuisine You Are Missing?</label>
+          <label className="form-label">Cuisine You Are Missing:</label>
           <select
             value={comfortCuisine}
             onChange={(e) => setComfortCuisine(e.target.value)}

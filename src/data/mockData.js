@@ -1,8 +1,7 @@
-// Mock data for the FlavorBridge app
+
 
 export const COMFORT_CUISINES = [
-  'North Indian', 
-  'South Indian', 
+  'Southeast Asian', 
   'American', 
   'Italian', 
   'Chinese', 
@@ -230,13 +229,13 @@ export const MOCK_RECIPES = {
 };
 
 export const INITIAL_USER_PROFILE = {
-  name: 'Alex Chen',
-  email: 'alex.chen@email.com',
-  joinDate: 'January 2024',
-  allergens: ['Peanuts', 'Shellfish'],
-  favoriteCuisines: ['Italian', 'Japanese', 'Mexican'],
-  translationsCompleted: 47,
-  recipesViewed: 124
+  name: 'Shreya Tripathi',
+  email: 'shrey.aaa@gmail.com',
+  joinDate: 'December 2025',
+  allergens: [],
+  favoriteCuisines: ['Indian', 'Mexican', 'Italian'],
+  translationsCompleted: 12,
+  recipesViewed: 52
 };
 
 export const INITIAL_SETTINGS = {

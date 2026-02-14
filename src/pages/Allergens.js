@@ -14,7 +14,7 @@ const Allergens = ({ selectedAllergens, toggleAllergen }) => {
       <div className="alert-card">
         <AlertCircle size={24} className="alert-icon" />
         <div>
-          <p className="alert-title">Safety First</p>
+          
           <p className="alert-text">
             Always consult with healthcare professionals about allergen substitutes
           </p>
