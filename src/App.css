@@ -1,0 +1,99 @@
+/* ==================== LAYOUT ==================== */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #F7F7F5 0%, #FFF9E6 50%, #F0F9F0 100%);
+}
+
+/* ==================== MAIN WRAPPER ==================== */
+.main-wrapper {
+  flex: 1;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-header {
+  display: none;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+}
+
+.content-wrapper {
+  width: 100%;
+  max-width: 640px;
+}
+
+/* ==================== MOBILE RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .main-wrapper {
+    margin-left: 0;
+  }
+
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #E5E5E5;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .menu-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #1E1E1E;
+  }
+
+  .mobile-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #1E1E1E;
+  }
+
+  .mobile-logo svg {
+    color: #2E7D32;
+  }
+
+  .mobile-spacer {
+    width: 40px;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+
+  .content-wrapper {
+    max-width: 100%;
+  }
+}
+
+/* ==================== SCROLLBAR ==================== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7F7F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2E7D32;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1B5E20;
+}
