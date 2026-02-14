@@ -18,7 +18,7 @@ from src.data.mock_data import (
 )
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
 
 
 @app.route("/api/data", methods=["GET"])
