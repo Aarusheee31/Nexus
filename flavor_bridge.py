@@ -7,12 +7,16 @@ from __future__ import annotations
 import math
 import requests
 from typing import Any
+import os # Import the os module
+from dotenv import load_dotenv
 
 from src.data import mock_data
 
+load_dotenv()
+
 # --- API Configuration ---
 API_BASE_URL = "https://api.foodoscope.com/recipe2-api"
-API_TOKEN = "Y2OYhJpk2OjKmCic-fmVCm_BPXuhBc2N75hZukqjQstOyFPF"
+API_TOKEN = os.getenv("API_TOKEN") # Get the token from environment variables
 API_HEADERS = {
     "Authorization": f"Bearer {API_TOKEN}",
     "Accept": "application/json"
