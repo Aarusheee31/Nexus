@@ -13,8 +13,8 @@ const Restaurants = ({ restaurants = [] }) => {
       <div className="location-card">
         <MapPin size={24} className="location-icon" />
         <div>
-          <p className="location-title">Location: San Francisco, CA</p>
-          <p className="location-text">Showing restaurants within 5 miles</p>
+          <p className="location-title">Location: Bangkok, Thailand</p>
+          <p className="location-text">Showing restaurants within 10 kms</p>
         </div>
       </div>
 

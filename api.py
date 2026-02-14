@@ -386,6 +386,7 @@ if __name__ == "__main__":
     print("")
     print("  ✅ Using REAL Foodoscope API for recipe data")
     print(f"  🔑 API Token: {API_KEY[:20]}..." if API_KEY else "  ❌ No API token found!")
+    print(f"  🔑 API Token: {API_KEY[:20]}..." if API_KEY else "  ❌ No API token found!")
     print("  🌐 Server: http://localhost:5000")
     print("  📡 CORS enabled for: http://localhost:3000")
     print("")

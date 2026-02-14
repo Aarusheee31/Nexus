@@ -53,13 +53,13 @@ ALLERGEN_SUBSTITUTES = {
 # -----------------------------------------------------------------------------
 
 INITIAL_USER_PROFILE = {
-    "name": "Flavor Explorer",
-    "email": "explorer@flavorbridge.app",
-    "joinDate": "2024",
-    "translationsCompleted": 0,
-    "recipesViewed": 0,
+    "name": "Kritika Tripathi",
+    "email": "kritik.aaa@gmail.com",
+    "joinDate": "December 2025",
+    "translationsCompleted": 7,
+    "recipesViewed": 19,
     "allergens": [],
-    "favoriteCuisines": ["Italian", "Japanese", "Mexican"],
+    "favoriteCuisines": ["Italian", "Japanese", "Indian"],
 }
 
 INITIAL_SETTINGS = {
@@ -74,23 +74,57 @@ INITIAL_SETTINGS = {
 MOCK_RESTAURANTS = [
     {
         "id": 1,
-        "image": "🍝",
-        "name": "Luigi's Trattoria",
-        "cuisine": "Italian",
-        "price": "$$",
-        "matchScore": 92,
-        "distance": "0.8 mi",
+        "name": "Coffee House",
+        "cuisine": "Indian",
+        "price": "$",
+        "matchScore": 95,
+        "distance": "0.5 km",
         "rating": "4.6",
     },
     {
         "id": 2,
-        "image": "🍗",
-        "name": "Bella Cucina",
-        "cuisine": "Italian",
+        "name": "Sandhu Kitchen",
+        "cuisine": "Indian",
+        "price": "$",
+        "matchScore": 92,
+        "distance": "4.5 km",
+        "rating": "4.8",
+    },
+    {
+        "id": 3,
+        "name": "Moti Mahal",
+        "cuisine": "Indian",
         "price": "$$$",
         "matchScore": 88,
-        "distance": "1.2 mi",
+        "distance": "0.76 km",
+        "rating": "4.3",
+    },
+    {
+        "id": 4,
+        "name": "Shahi Haveli",
+        "cuisine": "Indian",
+        "price": "$$",
+        "matchScore": 86,
+        "distance": "3.2 km",
+        "rating": "4.5",
+    },
+    {
+        "id": 5,
+        "name": "Dum Pukht",
+        "cuisine": "Indian",
+        "price": "$$",
+        "matchScore": 83,
+        "distance": "6.3 km",
         "rating": "4.8",
+    },
+    {
+        "id": 6,
+        "name": "Singh Dhaba",
+        "cuisine": "Indian",
+        "price": "$$",
+        "matchScore": 78,
+        "distance": "1.7 km",
+        "rating": "4.0",
     },
 ]
 
