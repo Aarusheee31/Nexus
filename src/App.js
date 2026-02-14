@@ -83,6 +83,8 @@ function App() {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
+  
+
   return (
     <div className="app-container">
       <Sidebar 
