@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChefHat, Menu } from 'lucide-react';
+import { Utensils, Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Results from './pages/Results';
@@ -104,8 +104,8 @@ function App() {
             <Menu size={24} />
           </button>
           <div className="mobile-logo">
-            <ChefHat size={24} />
-            <span>FlavorBridge</span>
+            <Utensils size={24} />
+            <span>PalatePal</span>
           </div>
           <div className="mobile-spacer" />
         </div>

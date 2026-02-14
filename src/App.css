@@ -55,11 +55,13 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px;
+    font-size: 22px;
     background: white;
     border-bottom: 1px solid #E5E5E5;
     position: sticky;
     top: 0;
     z-index: 100;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
   }
 
   .menu-button {

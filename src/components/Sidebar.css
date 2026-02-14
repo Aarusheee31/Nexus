@@ -38,8 +38,8 @@
 }
 
 .logo-icon {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
   border-radius: 12px;
   display: flex;
@@ -50,16 +50,21 @@
 }
 
 .logo-text h2 {
-  font-size: 18px;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 22px;
   font-weight: 700;
   color: #1E1E1E;
-  margin: 0;
+  margin: 5px 0;
+  
+  
 }
 
 .logo-text p {
-  font-size: 12px;
+  font-family: monospace;
+  font-size: 15px;
   color: #6B6B6B;
   margin: 0;
+  
 }
 
 .sidebar-close {
@@ -101,17 +106,20 @@
   font-weight: 500;
   width: 100%;
   text-align: left;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 .nav-item:hover {
-  background: #F7F7F5;
+  background: #c7d5ae;
   color: #1E1E1E;
+  justify-content: center;
 }
 
 .nav-item-active {
   background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
-  color: white;
+  color: rgb(255, 255, 255);
   font-weight: 600;
+  justify-content: center;
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
 }
 
