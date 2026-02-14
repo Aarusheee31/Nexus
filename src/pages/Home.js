@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lightbulb, AlertCircle } from 'lucide-react';
+import { AlertCircle, Lightbulb } from 'lucide-react';
 import './Pages.css';
 
 const Home = ({ 
@@ -27,7 +27,7 @@ const Home = ({
       </div>
 
       <div className="tip-card-main">
-        <Apple size={24} className="tip-icon" />
+        <Lightbulb size={24} className="tip-icon" />
         <div>
           <p className="tip-title-main">How it works</p>
           <p className="tip-text-main">
