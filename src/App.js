@@ -148,7 +148,7 @@ function App() {
 
   if (!hasCompletedOnboarding) {
     return (
-      <div className="app-container" style={{ maxWidth: '100%', margin: 0, minHeight: '100vh', padding: 0 }}>
+      <div className="onboarding-root">
         <Onboarding onComplete={() => setHasCompletedOnboarding(true)} />
       </div>
     );
