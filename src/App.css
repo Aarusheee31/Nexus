@@ -1,6 +1,15 @@
 
 
-  .app-container {
+/* Full-width wrapper for onboarding so card is not limited by app-container */
+.onboarding-root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
   max-width: 80%;
   margin: 40px auto;
   min-height: 90vh;
